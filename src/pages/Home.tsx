@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import OnboardingFlow from "@/components/OnboardingFlow";
 import {
   Camera,
   Scan,
@@ -62,6 +64,18 @@ const stats = [
 ];
 
 export default function Home() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
+  }
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
