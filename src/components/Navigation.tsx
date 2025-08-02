@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Camera, 
   Home, 
@@ -9,7 +10,9 @@ import {
   User, 
   Menu, 
   X,
-  Stethoscope
+  Stethoscope,
+  LogOut,
+  LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +27,7 @@ const navigationItems = [
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50 shadow-card">
@@ -45,6 +49,12 @@ export default function Navigation() {
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
+              
+              // Skip protected routes if user is not authenticated
+              if (!user && ['/detection', '/history', '/profile', '/progress'].includes(item.href)) {
+                return null;
+              }
+              
               return (
                 <Link key={item.name} to={item.href}>
                   <Button
@@ -61,6 +71,26 @@ export default function Navigation() {
                 </Link>
               );
             })}
+            
+            {/* Auth Buttons */}
+            {user ? (
+              <Button
+                onClick={signOut}
+                variant="outline"
+                size="sm"
+                className="text-foreground hover:text-destructive transition-colors ml-2"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            ) : (
+              <Link to="/auth">
+                <Button variant="medical" size="sm" className="ml-2">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -82,6 +112,12 @@ export default function Navigation() {
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
+                
+                // Skip protected routes if user is not authenticated
+                if (!user && ['/detection', '/history', '/profile', '/progress'].includes(item.href)) {
+                  return null;
+                }
+                
                 return (
                   <Link
                     key={item.name}
@@ -100,6 +136,29 @@ export default function Navigation() {
                   </Link>
                 );
               })}
+              
+              {/* Mobile Auth Buttons */}
+              {user ? (
+                <Button
+                  onClick={() => {
+                    signOut();
+                    setIsOpen(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start space-x-2 text-foreground hover:text-destructive transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </Button>
+              ) : (
+                <Link to="/auth" onClick={() => setIsOpen(false)} className="block">
+                  <Button variant="medical" size="sm" className="w-full justify-start space-x-2">
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import OnboardingFlow from "@/components/OnboardingFlow";
 import {
   Camera,
@@ -65,6 +66,7 @@ const stats = [
 
 export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
@@ -100,13 +102,23 @@ export default function Home() {
               Detect potential issues early and take control of your skin health.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/detection">
-                <Button variant="hero" size="xl" className="group">
-                  <Camera className="w-6 h-6 mr-2 group-hover:rotate-12 transition-transform" />
-                  Start Analysis
-                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              {user ? (
+                <Link to="/detection">
+                  <Button variant="hero" size="xl" className="group">
+                    <Camera className="w-6 h-6 mr-2 group-hover:rotate-12 transition-transform" />
+                    Start Analysis
+                    <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="hero" size="xl" className="group">
+                    <Camera className="w-6 h-6 mr-2 group-hover:rotate-12 transition-transform" />
+                    Get Started
+                    <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/about">
                 <Button variant="outline" size="xl" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                   Learn More
@@ -239,13 +251,23 @@ export default function Home() {
             Join thousands of users who trust SkinAI for their skin health monitoring. 
             Start your free analysis today.
           </p>
-          <Link to="/detection">
-            <Button variant="hero" size="xl" className="group">
-              <Scan className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
-              Start Free Analysis
-              <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+{user ? (
+            <Link to="/detection">
+              <Button variant="hero" size="xl" className="group">
+                <Scan className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
+                Start Free Analysis
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/auth">
+              <Button variant="hero" size="xl" className="group">
+                <Scan className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
+                Sign Up for Free
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
     </div>
