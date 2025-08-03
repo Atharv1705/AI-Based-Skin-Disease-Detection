@@ -12,6 +12,9 @@ import History from "./pages/History";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
+import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
+import Education from "./pages/Education";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -28,7 +31,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/education" element={<Education />} />
             <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/detection" 
               element={
@@ -58,6 +70,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Progress />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } 
             />

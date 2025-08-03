@@ -193,21 +193,46 @@ export default function EnhancedSkinAnalysis({ onAnalysisComplete }: { onAnalysi
 
   const startCamera = useCallback(async () => {
     try {
+      // Request camera permissions
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        } 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
+          frameRate: { ideal: 30, min: 15 }
+        },
+        audio: false
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(console.error);
+        };
         setIsStreaming(true);
+        
+        toast({
+          title: "Camera Ready",
+          description: "Camera is now active. Position your skin area in the frame.",
+        });
       }
     } catch (error) {
+      console.error('Camera error:', error);
+      let errorMessage = "Unable to access camera. Please check permissions and try again.";
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = "Camera permission denied. Please allow camera access and refresh the page.";
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = "No camera found. Please ensure your device has a camera.";
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = "Camera is already in use by another application.";
+        }
+      }
+      
       toast({
         title: "Camera Access Error",
-        description: "Unable to access camera. Please check permissions and try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
