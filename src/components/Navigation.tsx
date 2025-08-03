@@ -18,11 +18,10 @@ import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: Home, protected: true },
   { name: "Detection", href: "/detection", icon: Camera, protected: true },
   { name: "History", href: "/history", icon: History, protected: true },
-  { name: "Education", href: "/education", icon: Info },
   { name: "About", href: "/about", icon: Info },
+  { name: "Contact", href: "/contact", icon: Info },
   { name: "Profile", href: "/profile", icon: User, protected: true },
 ];
 

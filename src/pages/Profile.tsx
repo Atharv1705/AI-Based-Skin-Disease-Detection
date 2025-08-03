@@ -5,317 +5,196 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
-  Settings, 
-  Bell, 
-  Shield, 
-  Download,
-  Trash2,
-  Camera,
-  Calendar,
+  Mail, 
+  Save, 
+  Upload, 
   Activity,
-  Target,
-  TrendingUp
+  FileText,
+  Settings,
+  AlertCircle
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 
 interface UserProfile {
-  name: string;
-  email: string;
-  age: string;
-  skinType: string;
-  medicalHistory: string;
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  date_of_birth: string | null;
+  skin_type: string | null;
+  medical_history: string | null;
   notifications: boolean;
-  dataSharing: boolean;
-}
-
-interface UserStats {
-  totalAnalyses: number;
-  lastAnalysis: Date | null;
-  mostCommonCondition: string;
-  accuracyFeedback: number;
+  data_sharing: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function Profile() {
-  const [profile, setProfile] = useState<UserProfile>({
-    name: "",
-    email: "",
-    age: "",
-    skinType: "",
-    medicalHistory: "",
-    notifications: true,
-    dataSharing: false
-  });
-
-  const [stats, setStats] = useState<UserStats>({
-    totalAnalyses: 0,
-    lastAnalysis: null,
-    mostCommonCondition: "None",
-    accuracyFeedback: 0
-  });
-
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [analysisCount, setAnalysisCount] = useState(0);
+
+  const [formData, setFormData] = useState({
+    full_name: '',
+    date_of_birth: '',
+    skin_type: '',
+    medical_history: '',
+    notifications: true,
+    data_sharing: false
+  });
 
   useEffect(() => {
-    // Load profile from localStorage
-    const savedProfile = localStorage.getItem('userProfile');
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
+    if (user) {
+      fetchProfile();
+      loadAnalysisCount();
     }
+  }, [user]);
 
-    // Calculate stats from analysis history
-    const analysisHistory = JSON.parse(localStorage.getItem('skinAnalysisHistory') || '[]');
-    const conditionCounts: { [key: string]: number } = {};
-    
-    analysisHistory.forEach((analysis: any) => {
-      conditionCounts[analysis.condition] = (conditionCounts[analysis.condition] || 0) + 1;
-    });
+  const fetchProfile = async () => {
+    if (!user) return;
 
-    const mostCommon = Object.keys(conditionCounts).reduce((a, b) => 
-      conditionCounts[a] > conditionCounts[b] ? a : b, "None"
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else if (data) {
+        setProfile(data);
+        setFormData({
+          full_name: data.full_name || '',
+          date_of_birth: data.date_of_birth || '',
+          skin_type: data.skin_type || '',
+          medical_history: data.medical_history || '',
+          notifications: data.notifications || true,
+          data_sharing: data.data_sharing || false
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAnalysisCount = () => {
+    const history = localStorage.getItem('skinAnalysisHistory');
+    if (history) {
+      const parsedHistory = JSON.parse(history);
+      setAnalysisCount(parsedHistory.length);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          date_of_birth: formData.date_of_birth || null,
+          skin_type: formData.skin_type,
+          medical_history: formData.medical_history,
+          notifications: formData.notifications,
+          data_sharing: formData.data_sharing
+        })
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully"
+        });
+        setIsEditing(false);
+        fetchProfile();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
     );
-
-    setStats({
-      totalAnalyses: analysisHistory.length,
-      lastAnalysis: analysisHistory.length > 0 ? new Date(analysisHistory[0].timestamp) : null,
-      mostCommonCondition: analysisHistory.length > 0 ? mostCommon : "None",
-      accuracyFeedback: 4.2 // Mock feedback score
-    });
-  }, []);
-
-  const saveProfile = () => {
-    localStorage.setItem('userProfile', JSON.stringify(profile));
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
-    });
-  };
-
-  const exportData = () => {
-    const analysisHistory = localStorage.getItem('skinAnalysisHistory') || '[]';
-    const userData = {
-      profile,
-      analysisHistory: JSON.parse(analysisHistory)
-    };
-    
-    const blob = new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'skinai-data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Data Exported",
-      description: "Your data has been downloaded successfully.",
-    });
-  };
-
-  const clearAllData = () => {
-    localStorage.removeItem('userProfile');
-    localStorage.removeItem('skinAnalysisHistory');
-    setProfile({
-      name: "",
-      email: "",
-      age: "",
-      skinType: "",
-      medicalHistory: "",
-      notifications: true,
-      dataSharing: false
-    });
-    setStats({
-      totalAnalyses: 0,
-      lastAnalysis: null,
-      mostCommonCondition: "None",
-      accuracyFeedback: 0
-    });
-    toast({
-      title: "Data Cleared",
-      description: "All your data has been deleted.",
-      variant: "destructive"
-    });
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
+        <div className="mb-8">
           <Badge variant="secondary" className="mb-4">
             <User className="w-4 h-4 mr-2" />
             User Profile
           </Badge>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Your Profile
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Manage your account settings and view your analysis statistics
-          </p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">My Profile</h1>
+          <p className="text-xl text-muted-foreground">Manage your account information and preferences</p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-card border-border/50 shadow-card">
-            <CardContent className="pt-6 text-center">
-              <Activity className="w-8 h-8 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">{stats.totalAnalyses}</div>
-              <div className="text-sm text-muted-foreground">Total Analyses</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-card border-border/50 shadow-card">
-            <CardContent className="pt-6 text-center">
-              <Calendar className="w-8 h-8 text-accent mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
-                {stats.lastAnalysis ? stats.lastAnalysis.toLocaleDateString() : "Never"}
-              </div>
-              <div className="text-sm text-muted-foreground">Last Analysis</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-card border-border/50 shadow-card">
-            <CardContent className="pt-6 text-center">
-              <Target className="w-8 h-8 text-secondary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground truncate">{stats.mostCommonCondition}</div>
-              <div className="text-sm text-muted-foreground">Most Common</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-card border-border/50 shadow-card">
-            <CardContent className="pt-6 text-center">
-              <TrendingUp className="w-8 h-8 text-success mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">{stats.accuracyFeedback}/5</div>
-              <div className="text-sm text-muted-foreground">Accuracy Rating</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Profile Information */}
-          <Card className="bg-gradient-card border-border/50 shadow-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-primary" />
-                  <span>Profile Information</span>
-                </CardTitle>
-                <Button
-                  variant={isEditing ? "medical" : "outline"}
-                  size="sm"
-                  onClick={() => isEditing ? saveProfile() : setIsEditing(true)}
-                >
-                  {isEditing ? "Save" : "Edit"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="Enter your full name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="Enter your email"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  value={profile.age}
-                  onChange={(e) => setProfile({ ...profile, age: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="Enter your age"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="skinType">Skin Type</Label>
-                <Input
-                  id="skinType"
-                  value={profile.skinType}
-                  onChange={(e) => setProfile({ ...profile, skinType: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="e.g., Oily, Dry, Combination, Sensitive"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="medicalHistory">Medical History</Label>
-                <Textarea
-                  id="medicalHistory"
-                  value={profile.medicalHistory}
-                  onChange={(e) => setProfile({ ...profile, medicalHistory: e.target.value })}
-                  disabled={!isEditing}
-                  placeholder="Any relevant skin conditions or allergies"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Settings */}
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 space-y-6">
             <Card className="bg-gradient-card border-border/50 shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="w-5 h-5 text-primary" />
-                  <span>Preferences</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Bell className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">Notifications</div>
-                      <div className="text-sm text-muted-foreground">
-                        Receive analysis reminders and health tips
-                      </div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={profile.notifications}
-                    onCheckedChange={(checked) => 
-                      setProfile({ ...profile, notifications: checked })
-                    }
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Shield className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">Research Participation</div>
-                      <div className="text-sm text-muted-foreground">
-                        Help improve AI models (anonymous data only)
-                      </div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={profile.dataSharing}
-                    onCheckedChange={(checked) => 
-                      setProfile({ ...profile, dataSharing: checked })
-                    }
-                  />
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Avatar className="w-20 h-20 mx-auto mb-4">
+                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+                      {profile?.full_name ? getInitials(profile.full_name) : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <h3 className="text-xl font-bold text-foreground mb-1">
+                    {profile?.full_name || 'User'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">{user?.email}</p>
+                  
+                  <Button variant="outline" size="sm">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photo
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -323,54 +202,180 @@ export default function Profile() {
             <Card className="bg-gradient-card border-border/50 shadow-card">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <span>Data Management</span>
+                  <Activity className="w-5 h-5 text-primary" />
+                  <span>Account Stats</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button
-                  onClick={exportData}
-                  variant="outline"
-                  className="w-full justify-start"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Your Data
-                </Button>
-                
-                <Button
-                  onClick={clearAllData}
-                  variant="destructive"
-                  className="w-full justify-start"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Clear All Data
-                </Button>
-                
-                <div className="text-xs text-muted-foreground mt-4 p-3 bg-muted/50 rounded-lg">
-                  <Shield className="w-4 h-4 inline mr-1" />
-                  Your data is stored locally on your device and is never shared without your explicit consent.
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total Scans</span>
+                  <span className="font-semibold">{analysisCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <span className="font-semibold">
+                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-gradient-card border-border/50 shadow-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <span>Personal Information</span>
+                  </CardTitle>
+                  <Button 
+                    variant={isEditing ? "outline" : "default"}
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {isEditing ? 'Cancel' : 'Edit'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_birth">Date of Birth</Label>
+                    <Input
+                      id="date_of_birth"
+                      name="date_of_birth"
+                      type="date"
+                      value={formData.date_of_birth}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="skin_type">Skin Type</Label>
+                  <Input
+                    id="skin_type"
+                    name="skin_type"
+                    value={formData.skin_type}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    placeholder="e.g., Oily, Dry, Combination, Sensitive"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="medical_history">Medical History (Optional)</Label>
+                  <Textarea
+                    id="medical_history"
+                    name="medical_history"
+                    value={formData.medical_history}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    placeholder="Any relevant skin conditions, allergies, or medical history..."
+                    rows={4}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="font-medium text-foreground">Preferences</h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive updates about your analyses and health tips
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      name="notifications"
+                      checked={formData.notifications}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Data Sharing</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Help improve our AI by sharing anonymized data
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      name="data_sharing"
+                      checked={formData.data_sharing}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saving}
+                    className="w-full"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-card border-border/50 shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Mail className="w-5 h-5 text-primary" />
+                  <span>Account Security</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Email Address</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
+                  <Badge variant="secondary">Verified</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-destructive/5 border-destructive/20">
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-destructive mb-2">Important Medical Notice</h4>
+                    <p className="text-sm text-muted-foreground">
+                      This profile information helps provide personalized AI analysis but should never replace professional medical consultation.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Medical Disclaimer */}
-        <Card className="mt-8 bg-warning/10 border-warning/20">
-          <CardContent className="pt-6">
-            <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-warning mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-warning mb-1">Privacy Notice</p>
-                <p className="text-muted-foreground">
-                  All your personal information and analysis history is stored locally on your device. 
-                  SkinAI does not collect, store, or transmit your personal health data to external servers. 
-                  You have full control over your data and can export or delete it at any time.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
