@@ -1,4 +1,4 @@
-import EnhancedSkinAnalysis from "@/components/EnhancedSkinAnalysis";
+import ModernSkinAnalysis from "@/components/ModernSkinAnalysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -100,7 +100,7 @@ export default function Detection() {
         </Card>
 
         {/* Main Analysis Component */}
-        <EnhancedSkinAnalysis />
+        <ModernSkinAnalysis />
 
         {/* Additional Information */}
         <Card className="mt-8 bg-muted/30 border-border/50">

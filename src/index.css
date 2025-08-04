@@ -2,13 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Modern Medical AI App Design System - Dark/Light Theme Support */
 
 @layer base {
   :root {
-    /* Medical theme - Blues and whites for trust and cleanliness */
+    /* Light theme - Modern medical aesthetics */
     --background: 210 40% 98%;
     --foreground: 210 20% 15%;
 
@@ -18,50 +16,58 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 210 20% 15%;
 
-    /* Primary - Medical blue */
-    --primary: 210 100% 45%;
+    /* Modern primary - Vibrant medical blue with AI accent */
+    --primary: 210 100% 50%;
     --primary-foreground: 0 0% 100%;
     --primary-light: 210 100% 85%;
     --primary-glow: 210 100% 65%;
+    --primary-dark: 210 100% 35%;
 
-    /* Secondary - Soft medical teal */
-    --secondary: 180 45% 50%;
+    /* AI-inspired secondary colors */
+    --secondary: 270 60% 60%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 95%;
+    --muted: 210 40% 96%;
     --muted-foreground: 210 20% 50%;
 
     --accent: 195 85% 60%;
     --accent-foreground: 0 0% 100%;
 
-    /* Medical status colors */
-    --success: 145 80% 42%;
+    /* Enhanced status colors */
+    --success: 145 80% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
+    --warning: 45 93% 50%;
     --warning-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 40% 90%;
+    --border: 210 40% 88%;
     --input: 210 40% 96%;
-    --ring: 210 100% 45%;
+    --ring: 210 100% 50%;
 
-    /* Medical gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 45%), hsl(210 100% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(180 45% 50%), hsl(195 85% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 45%) 0%, hsl(195 85% 60%) 50%, hsl(180 45% 50%) 100%);
+    /* Modern AI-inspired gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(210 100% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(270 60% 60%), hsl(195 85% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 50%) 0%, hsl(270 60% 60%) 30%, hsl(195 85% 60%) 70%, hsl(180 45% 50%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --gradient-ai: linear-gradient(135deg, hsl(270 60% 60%) 0%, hsl(210 100% 50%) 100%);
+    --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(210 100% 50% / 0.1) 0%, transparent 50%), 
+                     radial-gradient(circle at 80% 20%, hsl(270 60% 60% / 0.1) 0%, transparent 50%),
+                     radial-gradient(circle at 40% 40%, hsl(195 85% 60% / 0.1) 0%, transparent 50%);
 
-    /* Medical shadows and glows */
-    --shadow-medical: 0 4px 20px hsl(210 100% 45% / 0.15);
-    --shadow-card: 0 2px 10px hsl(210 20% 15% / 0.1);
-    --glow-primary: 0 0 30px hsl(210 100% 65% / 0.3);
+    /* Enhanced shadows and effects */
+    --shadow-medical: 0 4px 20px hsl(210 100% 50% / 0.15);
+    --shadow-card: 0 2px 15px hsl(210 20% 15% / 0.08);
+    --shadow-ai: 0 8px 32px hsl(270 60% 60% / 0.15);
+    --glow-primary: 0 0 40px hsl(210 100% 65% / 0.4);
+    --glow-ai: 0 0 60px hsl(270 60% 60% / 0.3);
 
-    /* Animation variables */
+    /* Animation and transition variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-ai: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -81,33 +87,60 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark theme - Modern dark medical interface */
+    --background: 220 26% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 26% 10%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 26% 10%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Dark theme primary colors */
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 26% 8%;
+    --primary-light: 210 100% 75%;
+    --primary-glow: 210 100% 70%;
+    --primary-dark: 210 100% 45%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 270 60% 70%;
+    --secondary-foreground: 220 26% 8%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 26% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 195 85% 70%;
+    --accent-foreground: 220 26% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Dark theme status colors */
+    --success: 145 80% 50%;
+    --success-foreground: 220 26% 8%;
+    --warning: 45 93% 55%;
+    --warning-foreground: 220 26% 8%;
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 220 26% 8%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 220 26% 18%;
+    --input: 220 26% 15%;
+    --ring: 210 100% 60%;
+
+    /* Dark theme gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(210 100% 75%));
+    --gradient-secondary: linear-gradient(135deg, hsl(270 60% 70%), hsl(195 85% 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 60%) 0%, hsl(270 60% 70%) 30%, hsl(195 85% 70%) 70%, hsl(180 45% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220 26% 10%) 0%, hsl(220 26% 12%) 100%);
+    --gradient-ai: linear-gradient(135deg, hsl(270 60% 70%) 0%, hsl(210 100% 60%) 100%);
+    --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(210 100% 60% / 0.1) 0%, transparent 50%), 
+                     radial-gradient(circle at 80% 20%, hsl(270 60% 70% / 0.1) 0%, transparent 50%),
+                     radial-gradient(circle at 40% 40%, hsl(195 85% 70% / 0.1) 0%, transparent 50%);
+
+    /* Dark theme shadows and effects */
+    --shadow-medical: 0 4px 20px hsl(210 100% 60% / 0.2);
+    --shadow-card: 0 2px 15px hsl(220 26% 0% / 0.3);
+    --shadow-ai: 0 8px 32px hsl(270 60% 70% / 0.2);
+    --glow-primary: 0 0 40px hsl(210 100% 70% / 0.3);
+    --glow-ai: 0 0 60px hsl(270 60% 70% / 0.2);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -125,6 +158,97 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image: var(--gradient-mesh);
+    background-attachment: fixed;
+  }
+
+  /* Scrollbar styling for modern look */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  /* Modern glassmorphism effect */
+  .glass {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* AI-inspired glow effects */
+  .ai-glow {
+    box-shadow: var(--glow-ai);
+  }
+
+  .medical-glow {
+    box-shadow: var(--glow-primary);
+  }
+
+  /* Modern button variants */
+  .btn-ai {
+    background: var(--gradient-ai);
+    color: hsl(var(--primary-foreground));
+    border: none;
+    transition: var(--transition-ai);
+  }
+
+  .btn-ai:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-ai);
+  }
+
+  /* Animated backgrounds */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Modern card styles */
+  .card-modern {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+  }
+
+  .card-modern:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medical);
+  }
+
+  /* AI analysis states */
+  .analyzing::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.2), transparent);
+    animation: scan-line 2s infinite;
+  }
+
+  @keyframes scan-line {
+    0% { left: -100%; }
+    100% { left: 100%; }
   }
 }
