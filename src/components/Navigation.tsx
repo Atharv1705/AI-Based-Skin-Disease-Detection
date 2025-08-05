@@ -74,6 +74,9 @@ export default function Navigation() {
               );
             })}
             
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Auth Buttons */}
             {user ? (
               <Button
@@ -138,6 +141,11 @@ export default function Navigation() {
                   </Link>
                 );
               })}
+              
+              {/* Theme Toggle Mobile */}
+              <div className="px-3 py-2">
+                <ThemeToggle />
+              </div>
               
               {/* Mobile Auth Buttons */}
               {user ? (

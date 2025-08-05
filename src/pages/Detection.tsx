@@ -1,4 +1,5 @@
 import ModernSkinAnalysis from "@/components/ModernSkinAnalysis";
+import ChatBot from "@/components/ChatBot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -143,6 +144,9 @@ export default function Detection() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* AI Health Assistant ChatBot */}
+      <ChatBot />
     </div>
   );
 }

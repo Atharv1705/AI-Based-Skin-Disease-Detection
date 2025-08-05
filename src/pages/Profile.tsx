@@ -42,6 +42,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [analysisCount, setAnalysisCount] = useState(0);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -147,6 +148,49 @@ export default function Profile() {
     }));
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setAvatarUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully"
+      });
+      
+      fetchProfile();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload profile picture",
+        variant: "destructive"
+      });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -191,10 +235,21 @@ export default function Profile() {
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">{user?.email}</p>
                   
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
                     Upload Photo
                   </Button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
                 </div>
               </CardContent>
             </Card>
