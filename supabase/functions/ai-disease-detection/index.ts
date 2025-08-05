@@ -1,124 +1,74 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const geminiApiKey = 'AIzaSyBMBUXdD-7-V2iH4RC_DMrWok20lBhzerU';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Medical knowledge database for skin conditions
+// Medical knowledge base for enhanced responses
 const MEDICAL_KNOWLEDGE = {
-  "acne": {
-    description: "Common inflammatory skin condition characterized by comedones, papules, pustules, and sometimes nodules.",
-    severity: "low",
-    recommendations: [
-      "Use gentle, non-comedogenic cleansers twice daily",
-      "Apply topical retinoids or salicylic acid",
-      "Avoid picking or squeezing lesions",
-      "Consider seeing a dermatologist for persistent cases"
-    ],
-    urgency: "routine"
+  'acne': {
+    commonTreatments: ['Topical retinoids', 'Benzoyl peroxide', 'Salicylic acid', 'Antibiotics'],
+    severity: 'mild-severe',
+    specialist: 'dermatologist',
+    urgency: 'routine'
   },
-  "melanoma": {
-    description: "Serious form of skin cancer that develops from melanocytes. Requires immediate medical attention.",
-    severity: "high",
-    recommendations: [
-      "URGENT: See a dermatologist immediately",
-      "Avoid sun exposure and use high SPF sunscreen",
-      "Monitor for changes in size, color, or shape",
-      "Consider biopsy as recommended by physician"
-    ],
-    urgency: "immediate"
+  'eczema': {
+    commonTreatments: ['Moisturizers', 'Topical corticosteroids', 'Antihistamines'],
+    severity: 'mild-severe', 
+    specialist: 'dermatologist or allergist',
+    urgency: 'routine'
   },
-  "eczema": {
-    description: "Chronic inflammatory skin condition causing dry, itchy, and inflamed patches.",
-    severity: "medium",
-    recommendations: [
-      "Use fragrance-free moisturizers regularly",
-      "Avoid known triggers (stress, allergens)",
-      "Apply topical corticosteroids as directed",
-      "Consider antihistamines for itching"
-    ],
-    urgency: "routine"
+  'psoriasis': {
+    commonTreatments: ['Topical corticosteroids', 'Vitamin D analogs', 'Immunosuppressants'],
+    severity: 'mild-severe',
+    specialist: 'dermatologist or rheumatologist', 
+    urgency: 'routine'
   },
-  "psoriasis": {
-    description: "Autoimmune condition causing thick, scaly patches of skin.",
-    severity: "medium",
-    recommendations: [
-      "Use moisturizers and topical treatments",
-      "Avoid triggers like stress and infections",
-      "Consider phototherapy or systemic treatments",
-      "Consult dermatologist for treatment plan"
-    ],
-    urgency: "routine"
+  'melanoma': {
+    commonTreatments: ['Surgical excision', 'Immunotherapy', 'Radiation therapy'],
+    severity: 'severe',
+    specialist: 'oncological dermatologist',
+    urgency: 'urgent'
   },
-  "dermatitis": {
-    description: "General term for skin inflammation that can be caused by allergens or irritants.",
-    severity: "low",
-    recommendations: [
-      "Identify and avoid triggers",
-      "Use mild, fragrance-free products",
-      "Apply topical corticosteroids if needed",
-      "Keep skin moisturized"
-    ],
-    urgency: "routine"
+  'basal_cell_carcinoma': {
+    commonTreatments: ['Surgical excision', 'Mohs surgery', 'Topical chemotherapy'],
+    severity: 'moderate-severe',
+    specialist: 'dermatologist or dermatological surgeon',
+    urgency: 'semi-urgent'
   },
-  "rosacea": {
-    description: "Chronic inflammatory condition affecting facial skin, causing redness and visible blood vessels.",
-    severity: "medium",
-    recommendations: [
-      "Avoid known triggers (spicy foods, alcohol, sun)",
-      "Use gentle skincare products",
-      "Apply broad-spectrum sunscreen daily",
-      "Consider topical or oral treatments"
-    ],
-    urgency: "routine"
+  'dermatitis': {
+    commonTreatments: ['Avoid irritants', 'Moisturizers', 'Topical corticosteroids'],
+    severity: 'mild-moderate',
+    specialist: 'dermatologist or allergist',
+    urgency: 'routine'
   },
-  "basal_cell_carcinoma": {
-    description: "Most common type of skin cancer, typically slow-growing and locally invasive.",
-    severity: "high",
-    recommendations: [
-      "See dermatologist for evaluation and biopsy",
-      "Avoid sun exposure and use SPF 30+ sunscreen",
-      "Monitor for changes in appearance",
-      "Consider surgical removal as recommended"
-    ],
-    urgency: "urgent"
+  'rosacea': {
+    commonTreatments: ['Topical metronidazole', 'Oral antibiotics', 'Lifestyle modifications'],
+    severity: 'mild-moderate', 
+    specialist: 'dermatologist',
+    urgency: 'routine'
   },
-  "squamous_cell_carcinoma": {
-    description: "Second most common skin cancer, can metastasize if left untreated.",
-    severity: "high",
-    recommendations: [
-      "URGENT: See dermatologist immediately",
-      "Avoid sun exposure and use high SPF protection",
-      "Monitor for rapid changes",
-      "May require surgical intervention"
-    ],
-    urgency: "urgent"
+  'fungal_infection': {
+    commonTreatments: ['Antifungal creams', 'Oral antifungals', 'Proper hygiene'],
+    severity: 'mild-moderate',
+    specialist: 'dermatologist or primary care',
+    urgency: 'routine'
   },
-  "seborrheic_keratosis": {
-    description: "Common benign skin growth that appears as waxy, scaly patches.",
-    severity: "low",
-    recommendations: [
-      "Generally no treatment needed",
-      "Monitor for changes in appearance",
-      "Consider removal for cosmetic reasons",
-      "Consult dermatologist if appearance changes"
-    ],
-    urgency: "routine"
+  'warts': {
+    commonTreatments: ['Cryotherapy', 'Topical treatments', 'Laser therapy'],
+    severity: 'mild',
+    specialist: 'dermatologist or primary care',
+    urgency: 'routine'
   },
-  "contact_dermatitis": {
-    description: "Skin reaction caused by contact with allergens or irritants.",
-    severity: "low",
-    recommendations: [
-      "Identify and avoid the triggering substance",
-      "Use cool compresses for relief",
-      "Apply topical corticosteroids",
-      "Keep the area clean and dry"
-    ],
-    urgency: "routine"
+  'normal_skin': {
+    commonTreatments: ['Regular skincare routine', 'Sun protection', 'Moisturizing'],
+    severity: 'none',
+    specialist: 'none required',
+    urgency: 'none'
   }
 };
 
@@ -131,10 +81,10 @@ serve(async (req) => {
   try {
     const { imageData, patientAge, patientSex, medicalHistory } = await req.json();
 
-    if (!openAIApiKey) {
+    if (!geminiApiKey) {
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key not configured',
-        details: 'Please configure the OPENAI_API_KEY in your edge function secrets.'
+        error: 'Gemini API key not configured',
+        details: 'Please configure the GEMINI_API_KEY in your edge function.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,75 +94,73 @@ serve(async (req) => {
     // Enhanced prompt for medical analysis
     const medicalPrompt = `You are an expert dermatologist AI assistant. Analyze this skin image and provide a detailed medical assessment.
 
-Patient Information:
-- Age: ${patientAge || 'Not provided'}
-- Sex: ${patientSex || 'Not provided'}
-- Medical History: ${medicalHistory || 'Not provided'}
+PATIENT INFORMATION:
+- Age: ${patientAge || 'Not specified'}
+- Sex: ${patientSex || 'Not specified'}  
+- Medical History: ${medicalHistory || 'No significant history provided'}
 
-Please analyze the image and respond with ONLY a JSON object in this exact format:
+ANALYSIS REQUIREMENTS:
+Please provide your analysis in this EXACT JSON format:
+
 {
-  "condition": "most_likely_condition_name",
-  "confidence": 0.85,
-  "severity": "low|medium|high",
-  "description": "detailed medical description",
-  "differential_diagnoses": ["alternative_condition1", "alternative_condition2"],
-  "recommendations": ["recommendation1", "recommendation2"],
-  "urgency": "routine|urgent|immediate",
-  "disclaimer": "This is an AI analysis and should not replace professional medical consultation."
+  "condition": "primary_diagnosis_name",
+  "confidence": 85,
+  "severity": "mild|moderate|severe",
+  "description": "Detailed description of findings and characteristics observed",
+  "differential_diagnoses": ["alternative_diagnosis_1", "alternative_diagnosis_2"],
+  "recommendations": [
+    "Specific treatment recommendation 1",
+    "Specific treatment recommendation 2", 
+    "Specific care instruction 3"
+  ],
+  "urgency": "routine|semi-urgent|urgent",
+  "follow_up": "Recommended timeframe for follow-up care",
+  "red_flags": ["any concerning features that require immediate attention"]
 }
 
-Focus on common skin conditions like: acne, eczema, psoriasis, dermatitis, rosacea, melanoma, basal cell carcinoma, squamous cell carcinoma, seborrheic keratosis, contact dermatitis.
+IMPORTANT GUIDELINES:
+- Focus on visible characteristics like color, texture, size, distribution
+- Consider patient age and sex in your assessment
+- Provide realistic confidence levels (60-95%)
+- Be specific with recommendations
+- Include both immediate care and long-term management
+- Flag any concerning features that need urgent attention
+- If the image shows normal skin, indicate that clearly
 
-Consider factors like:
-- Color variations and patterns
-- Texture and surface characteristics
-- Size and distribution
-- Symmetry and border irregularities
-- Patient demographics and history
+Analyze the image thoroughly and respond with only the JSON object.`;
 
-Provide confidence as a decimal between 0.0 and 1.0.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: medicalPrompt
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Please analyze this skin condition image and provide your medical assessment.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageData,
-                  detail: 'high'
-                }
+        contents: [{
+          parts: [
+            {
+              text: medicalPrompt
+            },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: imageData.split(',')[1] // Remove data:image/jpeg;base64, prefix
               }
-            ]
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.1, // Low temperature for consistent medical analysis
+            }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1000,
+        }
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
+      console.error('Gemini API error:', errorData);
       return new Response(JSON.stringify({ 
         error: 'AI analysis failed',
-        details: `OpenAI API returned ${response.status}: ${errorData}`
+        details: errorData
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -223,57 +171,60 @@ Provide confidence as a decimal between 0.0 and 1.0.`;
     let aiAnalysis;
     
     try {
-      const content = data.choices[0].message.content;
-      // Extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const rawContent = data.candidates[0].content.parts[0].text;
+      console.log('Raw AI response:', rawContent);
+      
+      // Try to extract JSON from the response
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         aiAnalysis = JSON.parse(jsonMatch[0]);
       } else {
         throw new Error('No JSON found in response');
       }
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      // Fallback analysis
-      aiAnalysis = {
-        condition: "skin_condition",
-        confidence: 0.7,
-        severity: "medium",
-        description: "Unable to parse detailed analysis. General skin condition detected.",
-        differential_diagnoses: ["eczema", "dermatitis"],
-        recommendations: ["Consult a dermatologist for proper diagnosis"],
-        urgency: "routine",
-        disclaimer: "This is an AI analysis and should not replace professional medical consultation."
-      };
+      console.error('Failed to parse AI response:', parseError);
+      return new Response(JSON.stringify({
+        error: 'Failed to parse AI analysis',
+        details: parseError.message
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Enhance with medical knowledge if available
-    const conditionKey = aiAnalysis.condition.toLowerCase().replace(/[^a-z]/g, '_');
-    const medicalInfo = MEDICAL_KNOWLEDGE[conditionKey];
+    // Enhance analysis with medical knowledge
+    const condition = aiAnalysis.condition?.toLowerCase().replace(/\s+/g, '_');
+    const knowledgeBase = MEDICAL_KNOWLEDGE[condition] || {};
     
-    if (medicalInfo) {
-      aiAnalysis.description = medicalInfo.description;
-      aiAnalysis.recommendations = medicalInfo.recommendations;
-      aiAnalysis.severity = medicalInfo.severity;
-      aiAnalysis.urgency = medicalInfo.urgency;
+    // Add safety warnings for high severity or urgent cases
+    let safetyWarnings = [];
+    if (aiAnalysis.severity === 'severe' || aiAnalysis.urgency === 'urgent') {
+      safetyWarnings.push('This analysis suggests a potentially serious condition. Please seek immediate medical attention.');
+    }
+    if (aiAnalysis.red_flags && aiAnalysis.red_flags.length > 0) {
+      safetyWarnings.push('Red flag symptoms detected. Urgent medical evaluation recommended.');
     }
 
-    // Add safety measures
-    if (aiAnalysis.severity === 'high' || aiAnalysis.urgency === 'immediate' || aiAnalysis.urgency === 'urgent') {
-      aiAnalysis.recommendations.unshift("⚠️ IMPORTANT: Seek immediate medical attention from a qualified dermatologist or physician");
-    }
+    // Generate unique analysis ID and timestamp
+    const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = new Date().toISOString();
 
-    // Generate unique analysis ID
-    const analysisId = crypto.randomUUID();
-    
-    const result = {
-      id: analysisId,
-      timestamp: new Date().toISOString(),
-      analysis: aiAnalysis,
-      confidence_level: aiAnalysis.confidence > 0.8 ? 'high' : aiAnalysis.confidence > 0.6 ? 'medium' : 'low',
-      medical_disclaimer: "This AI analysis is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always consult with a qualified healthcare provider for medical concerns."
+    const enhancedAnalysis = {
+      ...aiAnalysis,
+      analysisId,
+      timestamp,
+      patientInfo: {
+        age: patientAge,
+        sex: patientSex,
+        medicalHistory
+      },
+      medicalKnowledge: knowledgeBase,
+      safetyWarnings,
+      confidence: Math.min(Math.max(aiAnalysis.confidence || 70, 60), 95), // Ensure realistic range
+      disclaimer: "This AI analysis is for informational purposes only and should not replace professional medical advice. Always consult with a qualified healthcare provider for proper diagnosis and treatment."
     };
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify(enhancedAnalysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
@@ -281,7 +232,7 @@ Provide confidence as a decimal between 0.0 and 1.0.`;
     console.error('Error in ai-disease-detection function:', error);
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
-      details: error.message
+      details: error.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

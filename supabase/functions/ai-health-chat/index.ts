@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const geminiApiKey = 'AIzaSyBMBUXdD-7-V2iH4RC_DMrWok20lBhzerU';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,9 +46,9 @@ serve(async (req) => {
   try {
     const { message, conversationHistory } = await req.json();
 
-    if (!openAIApiKey) {
+    if (!geminiApiKey) {
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key not configured',
+        error: 'Gemini API key not configured',
         response: 'I apologize, but I\'m currently unable to respond due to a configuration issue. Please try again later.'
       }), {
         status: 500,
@@ -56,48 +56,44 @@ serve(async (req) => {
       });
     }
 
-    // Build conversation context
-    const messages = [
-      { role: 'system', content: HEALTH_SYSTEM_PROMPT }
-    ];
-
+    // Build conversation context for Gemini
+    let conversationText = HEALTH_SYSTEM_PROMPT + '\n\n';
+    
     // Add recent conversation history for context
     if (conversationHistory && Array.isArray(conversationHistory)) {
       conversationHistory.forEach((msg: any) => {
-        if (msg.role === 'user' || msg.role === 'assistant') {
-          messages.push({
-            role: msg.role,
-            content: msg.content
-          });
+        if (msg.role === 'user') {
+          conversationText += `User: ${msg.content}\n`;
+        } else if (msg.role === 'assistant') {
+          conversationText += `Assistant: ${msg.content}\n`;
         }
       });
     }
 
     // Add current user message
-    messages.push({
-      role: 'user',
-      content: message
-    });
+    conversationText += `User: ${message}\nAssistant:`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
+        contents: [{
+          parts: [{
+            text: conversationText
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        }
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
+      console.error('Gemini API error:', errorData);
       return new Response(JSON.stringify({ 
         error: 'AI service unavailable',
         response: 'I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.'
@@ -108,7 +104,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    const aiResponse = data.candidates[0].content.parts[0].text;
 
     return new Response(JSON.stringify({ 
       response: aiResponse,

@@ -152,14 +152,37 @@ export default function Profile() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large", 
+        description: "Please select an image under 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setAvatarUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          cacheControl: '3600'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -167,10 +190,15 @@ export default function Profile() {
         .from('avatars')
         .getPublicUrl(fileName);
 
+      // Upsert profile with avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', user.id);
+        .upsert({ 
+          user_id: user.id,
+          avatar_url: publicUrl,
+          full_name: profile?.full_name || user.email?.split('@')[0] || 'User',
+          updated_at: new Date().toISOString()
+        });
 
       if (updateError) throw updateError;
 
@@ -181,6 +209,7 @@ export default function Profile() {
       
       fetchProfile();
     } catch (error: any) {
+      console.error('Avatar upload error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to upload profile picture",
