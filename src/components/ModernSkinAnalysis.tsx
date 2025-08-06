@@ -181,6 +181,9 @@ export default function ModernSkinAnalysis() {
 
       if (error) {
         console.error('Supabase function error:', error);
+        if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+          throw new Error('AI analysis temporarily unavailable due to high demand. Please try again in a few minutes.');
+        }
         throw new Error(error.message || 'Analysis service unavailable');
       }
 

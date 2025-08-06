@@ -200,15 +200,14 @@ export default function Profile() {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Upsert profile with avatar URL
+      // Update profile with avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({ 
-          user_id: user.id,
+        .update({ 
           avatar_url: publicUrl,
-          full_name: profile?.full_name || user.email?.split('@')[0] || 'User',
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
@@ -259,7 +258,7 @@ export default function Profile() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            <Card className="bg-gradient-card border-border/50 shadow-card">
+            <Card className="card-modern border-primary/20 shadow-medical hover:shadow-ai transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="text-center">
                   <Avatar className="w-20 h-20 mx-auto mb-4">
@@ -278,9 +277,11 @@ export default function Profile() {
                     variant="outline" 
                     size="sm"
                     onClick={() => document.getElementById('avatar-upload')?.click()}
+                    disabled={avatarUploading}
+                    className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/30 hover:shadow-primary/20 hover:shadow-lg transition-all duration-300"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Photo
+                    {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                   </Button>
                   <input
                     id="avatar-upload"
@@ -293,7 +294,7 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card border-border/50 shadow-card">
+            <Card className="card-modern border-primary/20 shadow-medical hover:shadow-ai transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Activity className="w-5 h-5 text-primary" />
@@ -316,7 +317,7 @@ export default function Profile() {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            <Card className="bg-gradient-card border-border/50 shadow-card">
+            <Card className="card-modern border-primary/20 shadow-medical hover:shadow-ai transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
@@ -428,7 +429,7 @@ export default function Profile() {
                   <Button 
                     onClick={handleSave} 
                     disabled={saving}
-                    className="w-full"
+                    className="w-full btn-ai hover:scale-105 transition-all duration-300"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     {saving ? 'Saving...' : 'Save Changes'}
@@ -437,7 +438,7 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card border-border/50 shadow-card">
+            <Card className="card-modern border-primary/20 shadow-medical hover:shadow-ai transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Mail className="w-5 h-5 text-primary" />
@@ -455,7 +456,7 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            <Card className="bg-destructive/5 border-destructive/20">
+            <Card className="glass border-warning/30 bg-gradient-to-r from-warning/5 to-destructive/5 hover:shadow-lg transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />

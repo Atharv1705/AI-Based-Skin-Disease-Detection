@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = 'AIzaSyBMBUXdD-7-V2iH4RC_DMrWok20lBhzerU';
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || 'AIzaSyBMBUXdD-7-V2iH4RC_DMrWok20lBhzerU';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -158,6 +158,22 @@ Analyze the image thoroughly and respond with only the JSON object.`;
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Gemini API error:', errorData);
+      
+      // Handle quota exceeded gracefully
+      if (errorData.includes('quota') || errorData.includes('rate limit')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI analysis temporarily unavailable due to high demand. Please try again in a few minutes.',
+            details: 'Rate limit exceeded',
+            isQuotaError: true
+          }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
       return new Response(JSON.stringify({ 
         error: 'AI analysis failed',
         details: errorData
@@ -229,13 +245,33 @@ Analyze the image thoroughly and respond with only the JSON object.`;
     });
 
   } catch (error) {
-    console.error('Error in ai-disease-detection function:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Gemini API error:', JSON.stringify(error, null, 2));
+    
+    // Handle quota exceeded gracefully
+    const errorMessage = error.message || 'Failed to analyze image with AI';
+    if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'AI analysis temporarily unavailable due to high demand. Please try again in a few minutes.',
+          details: 'Rate limit exceeded',
+          isQuotaError: true
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    return new Response(
+      JSON.stringify({ 
+        error: 'Failed to analyze image with AI',
+        details: errorMessage 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });
