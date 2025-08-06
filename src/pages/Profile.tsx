@@ -177,6 +177,16 @@ export default function Profile() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
+      // First, delete any existing avatar for this user
+      const { data: existingFiles } = await supabase.storage
+        .from('avatars')
+        .list(user.id, { limit: 100 });
+
+      if (existingFiles && existingFiles.length > 0) {
+        const filesToDelete = existingFiles.map(file => `${user.id}/${file.name}`);
+        await supabase.storage.from('avatars').remove(filesToDelete);
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { 

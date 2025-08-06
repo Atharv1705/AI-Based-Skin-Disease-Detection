@@ -174,12 +174,33 @@ export default function ModernSkinAnalysis() {
         }
       });
 
+      console.log('Analysis response:', { data, error });
+
       clearInterval(progressInterval);
       setAnalysisProgress(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Analysis service unavailable');
+      }
 
-      const analysisResult: AnalysisResult = data;
+      // Transform the data to match expected format
+      const analysisResult: AnalysisResult = {
+        id: data.analysisId || Date.now().toString(),
+        analysis: {
+          condition: data.condition || 'Unknown',
+          confidence: data.confidence || 0,
+          severity: data.severity?.toLowerCase() || 'medium',
+          description: data.description || 'No description available',
+          differential_diagnoses: data.differential_diagnoses || [],
+          recommendations: data.recommendations || [],
+          urgency: data.urgency || 'routine',
+          disclaimer: data.disclaimer || 'This is an AI analysis and should not replace professional medical advice.'
+        },
+        confidence_level: data.confidence > 80 ? 'high' : data.confidence > 60 ? 'medium' : 'low',
+        medical_disclaimer: data.disclaimer || 'This analysis is for informational purposes only.',
+        timestamp: data.timestamp || new Date().toISOString()
+      };
       setResult(analysisResult);
       
       // Save to localStorage with enhanced data

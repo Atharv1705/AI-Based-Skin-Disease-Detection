@@ -1,5 +1,6 @@
 import ModernSkinAnalysis from "@/components/ModernSkinAnalysis";
 import ChatBot from "@/components/ChatBot";
+import EnhancedHeader from "@/components/EnhancedHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -42,20 +43,7 @@ export default function Detection() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Badge variant="secondary" className="mb-4">
-            <Scan className="w-4 h-4 mr-2" />
-            AI Detection
-          </Badge>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Skin Disease Detection
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Upload an image or use your camera to get instant AI-powered analysis 
-            of potential skin conditions.
-          </p>
-        </div>
+        <EnhancedHeader />
 
         {/* Tips Section */}
         <Card className="mb-8 bg-gradient-card border-border/50 shadow-card">
