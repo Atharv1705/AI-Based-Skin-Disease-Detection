@@ -1,0 +1,15 @@
+[
+  {
+    "id": "787b8374-79ad-4ca1-b81f-d26b46e405e3",
+    "user_id": "034ce2ea-aac7-4004-bf75-2ef1a6cc9537",
+    "full_name": "Atharv Gunjarge",
+    "avatar_url": "http://localhost:4000/uploads/avatars/034ce2ea-aac7-4004-bf75-2ef1a6cc9537/1754723935464.jpg",
+    "date_of_birth": null,
+    "skin_type": null,
+    "medical_history": null,
+    "notifications": true,
+    "data_sharing": false,
+    "created_at": "2025-08-09T07:16:20.527Z",
+    "updated_at": "2025-08-09T07:18:55.485Z"
+  }
+]

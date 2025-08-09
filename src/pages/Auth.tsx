@@ -15,7 +15,9 @@ import {
   Stethoscope,
   Shield,
   UserPlus,
-  LogIn
+  LogIn,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 export default function Auth() {
@@ -28,6 +30,7 @@ export default function Auth() {
     fullName: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -152,14 +155,25 @@ export default function Auth() {
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-white/50"
+                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-white/50"
                     required
                     minLength={6}
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    spellCheck={false}
+                    autoCorrect="off"
                   />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {isSignUp && (
                   <p className="text-xs text-white/70">

@@ -1,3 +1,39 @@
+# Dermascan Quest
+
+## Backend API
+
+This project now includes a local backend to replace Supabase for auth, profiles, avatar uploads, and AI endpoints.
+
+### Start backend
+
+1. Install dependencies
+
+```
+npm install
+```
+
+2. Run API server
+
+```
+npm run server
+```
+
+Server runs at `http://localhost:4000` by default. You can override with `PORT` env var.
+
+### Configure frontend
+
+Create `.env` or `.env.local` and set:
+
+```
+VITE_API_BASE_URL=http://localhost:4000
+```
+
+Then run the frontend with `npm run dev`.
+
+### API keys
+
+Gemini API key is used by the backend. Set environment variable `GEMINI_API_KEY` when starting the server. If not provided, the current key in use remains as default and is not removed.
+
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>

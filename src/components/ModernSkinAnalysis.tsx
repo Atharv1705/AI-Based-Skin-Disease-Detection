@@ -20,7 +20,7 @@ import {
   Zap
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { backend } from "@/integrations/backend/client";
 
 interface AnalysisResult {
   id: string;
@@ -165,27 +165,19 @@ export default function ModernSkinAnalysis() {
         });
       }, 500);
 
-      const { data, error } = await supabase.functions.invoke('ai-disease-detection', {
-        body: {
-          imageData,
-          patientAge: patientAge || undefined,
-          patientSex: patientSex || undefined,
-          medicalHistory: medicalHistory || undefined
-        }
+      const data: any = await backend.diseaseDetection({
+        imageData,
+        patientAge: patientAge || undefined,
+        patientSex: patientSex || undefined,
+        medicalHistory: medicalHistory || undefined
       });
 
-      console.log('Analysis response:', { data, error });
+      console.log('Analysis response:', { data });
 
       clearInterval(progressInterval);
       setAnalysisProgress(100);
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
-          throw new Error('AI analysis temporarily unavailable due to high demand. Please try again in a few minutes.');
-        }
-        throw new Error(error.message || 'Analysis service unavailable');
-      }
+      // Errors are thrown by backend.diseaseDetection when !ok
 
       // Transform the data to match expected format
       const analysisResult: AnalysisResult = {

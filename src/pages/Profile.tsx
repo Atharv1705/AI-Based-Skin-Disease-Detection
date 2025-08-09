@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { backend } from "@/integrations/backend/client";
 import { 
   User, 
   Mail, 
@@ -21,6 +21,91 @@ import {
   AlertCircle
 } from "lucide-react";
 
+function ChangeEmailForm() {
+  const { user, reloadUser } = useAuth();
+  const [newEmail, setNewEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const { user: updated } = await backend.changeEmail(newEmail, password);
+      toast({ title: 'Email updated', description: `Your email is now ${updated.email}` });
+      await reloadUser();
+      setNewEmail("");
+      setPassword("");
+    } catch (err: any) {
+      toast({ title: 'Failed to change email', description: err.message || 'Error', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 p-4 border rounded-md">
+      <div>
+        <Label htmlFor="new_email">New Email</Label>
+        <Input id="new_email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={user?.email || 'you@example.com'} required />
+      </div>
+      <div>
+        <Label htmlFor="current_password">Current Password</Label>
+        <Input id="current_password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      </div>
+      <Button type="submit" disabled={submitting || !newEmail || !password} className="w-full">
+        {submitting ? 'Updating...' : 'Change Email'}
+      </Button>
+    </form>
+  );
+}
+
+function ChangePasswordForm() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords do not match', description: 'Please confirm your new password.', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await backend.changePassword(currentPassword, newPassword);
+      toast({ title: 'Password updated', description: 'Your password has been changed.' });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: 'Failed to change password', description: err.message || 'Error', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 p-4 border rounded-md">
+      <div>
+        <Label htmlFor="cur_pass">Current Password</Label>
+        <Input id="cur_pass" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+      </div>
+      <div>
+        <Label htmlFor="new_pass">New Password</Label>
+        <Input id="new_pass" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
+      </div>
+      <div>
+        <Label htmlFor="confirm_pass">Confirm New Password</Label>
+        <Input id="confirm_pass" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
+      </div>
+      <Button type="submit" disabled={submitting || !currentPassword || !newPassword || !confirmPassword} className="w-full">
+        {submitting ? 'Updating...' : 'Change Password'}
+      </Button>
+    </form>
+  );
+}
 interface UserProfile {
   id: string;
   user_id: string;
@@ -64,25 +149,16 @@ export default function Profile() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else if (data) {
-        setProfile(data);
-        setFormData({
-          full_name: data.full_name || '',
-          date_of_birth: data.date_of_birth || '',
-          skin_type: data.skin_type || '',
-          medical_history: data.medical_history || '',
-          notifications: data.notifications || true,
-          data_sharing: data.data_sharing || false
-        });
-      }
+      const data = await backend.getMyProfile();
+      setProfile(data);
+      setFormData({
+        full_name: data.full_name || '',
+        date_of_birth: data.date_of_birth || '',
+        skin_type: data.skin_type || '',
+        medical_history: data.medical_history || '',
+        notifications: data.notifications ?? true,
+        data_sharing: data.data_sharing ?? false
+      });
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -103,38 +179,19 @@ export default function Profile() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          date_of_birth: formData.date_of_birth || null,
-          skin_type: formData.skin_type,
-          medical_history: formData.medical_history,
-          notifications: formData.notifications,
-          data_sharing: formData.data_sharing
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to update profile",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Profile updated successfully"
-        });
-        setIsEditing(false);
-        fetchProfile();
-      }
+      await backend.updateMyProfile({
+        full_name: formData.full_name,
+        date_of_birth: formData.date_of_birth || null,
+        skin_type: formData.skin_type,
+        medical_history: formData.medical_history,
+        notifications: formData.notifications,
+        data_sharing: formData.data_sharing
+      } as any);
+      toast({ title: "Success", description: "Profile updated successfully" });
+      setIsEditing(false);
+      fetchProfile();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -174,58 +231,24 @@ export default function Profile() {
 
     setAvatarUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // First, delete any existing avatar for this user
-      const { data: existingFiles } = await supabase.storage
-        .from('avatars')
-        .list(user.id, { limit: 100 });
-
-      if (existingFiles && existingFiles.length > 0) {
-        const filesToDelete = existingFiles.map(file => `${user.id}/${file.name}`);
-        await supabase.storage.from('avatars').remove(filesToDelete);
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { 
-          upsert: true,
-          cacheControl: '3600'
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      // Update profile with avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Success",
-        description: "Profile picture updated successfully"
-      });
-      
+      await backend.uploadAvatar(file);
+      toast({ title: "Success", description: "Profile picture updated successfully" });
       fetchProfile();
     } catch (error: any) {
       console.error('Avatar upload error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload profile picture",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: error.message || "Failed to upload profile picture", variant: "destructive" });
     } finally {
       setAvatarUploading(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    try {
+      await backend.removeAvatar();
+      toast({ title: 'Removed', description: 'Profile photo removed' });
+      fetchProfile();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to remove photo', variant: 'destructive' });
     }
   };
 
@@ -283,6 +306,16 @@ export default function Profile() {
                     <Upload className="w-4 h-4 mr-2" />
                     {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                   </Button>
+                  {profile?.avatar_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAvatarRemove}
+                      className="ml-2"
+                    >
+                      Remove Photo
+                    </Button>
+                  )}
                   <input
                     id="avatar-upload"
                     type="file"
@@ -445,13 +478,20 @@ export default function Profile() {
                   <span>Account Security</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Email Address</p>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
                   <Badge variant="secondary">Verified</Badge>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ChangeEmailForm />
+                  <ChangePasswordForm />
                 </div>
               </CardContent>
             </Card>

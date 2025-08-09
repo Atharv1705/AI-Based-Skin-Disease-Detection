@@ -72,12 +72,12 @@ export default function Detection() {
         </Card>
 
         {/* Privacy Notice */}
-        <Card className="mb-8 bg-primary/5 border-primary/20">
+        <Card className="mb-8 border">
           <CardContent className="pt-6">
             <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-primary mt-0.5" />
+              <Shield className="w-5 h-5 mt-0.5" />
               <div className="text-sm">
-                <h4 className="font-medium text-primary mb-1">Privacy & Security</h4>
+                <h4 className="font-medium mb-1">Privacy & Security</h4>
                 <p className="text-muted-foreground">
                   Your images are processed locally and securely. We do not store or share 
                   your personal health information. All analysis is performed with 
@@ -92,18 +92,18 @@ export default function Detection() {
         <ModernSkinAnalysis />
 
         {/* Additional Information */}
-        <Card className="mt-8 bg-muted/30 border-border/50">
+        <Card className="mt-8 border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-primary" />
+              <Clock className="w-5 h-5" />
               <span>What to Expect</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <span className="text-primary font-bold">1-2s</span>
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <span className="font-bold">1-2s</span>
                 </div>
                 <h4 className="font-medium mb-2">Image Processing</h4>
                 <p className="text-sm text-muted-foreground">
@@ -111,8 +111,8 @@ export default function Detection() {
                 </p>
               </div>
               <div className="text-center">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <span className="text-accent font-bold">5-10s</span>
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <span className="font-bold">5-10s</span>
                 </div>
                 <h4 className="font-medium mb-2">Condition Detection</h4>
                 <p className="text-sm text-muted-foreground">
@@ -120,8 +120,8 @@ export default function Detection() {
                 </p>
               </div>
               <div className="text-center">
-                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <span className="text-success font-bold">Instant</span>
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <span className="font-bold">Instant</span>
                 </div>
                 <h4 className="font-medium mb-2">Results & Recommendations</h4>
                 <p className="text-sm text-muted-foreground">
